@@ -48,6 +48,13 @@ const guardianResponseSchema = z.object({
 
 export type GuardianResult = z.input<typeof guardianResultSchema>
 
+function upgradeGuardianImageUrl(url: string | undefined): string | null {
+  if (!url) return null
+  // The API's `thumbnail` field defaults to 500px. Guardian's image CDN
+  // accepts the same crop path with a larger terminal width for hero cards.
+  return url.replace(/\/\d+\.jpg(?:\?.*)?$/i, '/1200.jpg')
+}
+
 export function mapGuardianResult(input: GuardianResult): Article {
   const result = guardianResultSchema.parse(input)
   return {
@@ -57,7 +64,7 @@ export function mapGuardianResult(input: GuardianResult): Article {
     title: result.webTitle,
     description: stripHtml(result.fields?.trailText),
     url: result.webUrl,
-    imageUrl: result.fields?.thumbnail ?? null,
+    imageUrl: upgradeGuardianImageUrl(result.fields?.thumbnail),
     publishedAt: new Date(result.webPublicationDate).toISOString(),
     publisher: { id: 'theguardian.com', name: 'The Guardian' },
     authors: (result.tags ?? [])

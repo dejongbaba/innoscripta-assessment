@@ -29,6 +29,15 @@ describe('provider normalization', () => {
     })
   })
 
+  it('requests the larger Guardian CDN rendition for card imagery', () => {
+    const article = mapGuardianResult({
+      id: 'world/2026/sep/23/image', webTitle: 'Image story',
+      webUrl: 'https://www.theguardian.com/world/2026/sep/23/image', webPublicationDate: '2026-09-23T08:00:00Z',
+      fields: { thumbnail: 'https://media.guim.co.uk/hash/248_0_4503_3602/500.jpg' },
+    })
+    expect(article.imageUrl).toContain('/1200.jpg')
+  })
+
   it('normalizes NewsAPI.ai source, author and category URIs', () => {
     const article = mapNewsApiResult({
       uri: '123',

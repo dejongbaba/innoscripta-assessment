@@ -36,15 +36,15 @@ export function ArticleCard({ article, featured = false }: { article: Article; f
           </Badge>
           <Badge className="absolute bottom-3 left-3 bg-primary/85 text-primary-foreground">{article.publisher.name}</Badge>
         </div>
-        <CardHeader className="gap-3 px-0 pt-5">
+        <CardHeader className="gap-3 px-5 pt-5 sm:px-6">
           <p className="text-xs text-muted-foreground">
             {format(new Date(article.publishedAt), 'MMM d, yyyy')}
             {article.readTimeMinutes ? ` · ${article.readTimeMinutes} min read` : ''}
           </p>
           <CardTitle className={cn('leading-tight tracking-[-0.035em]', featured ? 'text-2xl sm:text-3xl' : 'text-xl')}>{article.title}</CardTitle>
         </CardHeader>
-        {article.description ? <CardContent className="line-clamp-2 px-0 text-sm leading-6 text-muted-foreground">{article.description}</CardContent> : null}
-        <CardFooter className="px-0 pb-0 pt-2">
+        {article.description ? <CardContent className="line-clamp-2 px-5 text-sm leading-6 text-muted-foreground sm:px-6">{article.description}</CardContent> : null}
+        <CardFooter className="px-5 pb-5 pt-2 sm:px-6">
           <span className="inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-sm font-medium transition-colors group-hover/card:border-primary group-hover/card:bg-primary group-hover/card:text-primary-foreground group-focus-visible/card:border-primary group-focus-visible/card:bg-primary group-focus-visible/card:text-primary-foreground">
             Read more <ArrowRightIcon aria-hidden="true" className="transition-transform duration-300 group-hover/card:translate-x-0.5 group-focus-visible/card:translate-x-0.5" />
           </span>
