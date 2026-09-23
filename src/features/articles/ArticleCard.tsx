@@ -44,7 +44,7 @@ export function ArticleCard({ article, featured = false }: { article: Article; f
           </Badge>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-3 pt-5">
+        <div className="flex min-w-0 flex-col gap-3 px-2 pt-5 sm:px-2.5">
           <p className="flex min-h-5 items-center gap-1 whitespace-nowrap text-[13px] leading-5 text-muted-foreground">
             {format(new Date(article.publishedAt), 'MMM d, yyyy')}
             {article.readTimeMinutes ? <><span aria-hidden="true">•</span><span>{article.readTimeMinutes} min read</span></> : null}
