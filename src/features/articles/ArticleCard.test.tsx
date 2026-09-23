@@ -28,7 +28,7 @@ describe('ArticleCard', () => {
     expect(link).toHaveAttribute('target', '_blank')
     expect(link).toHaveAttribute('rel', 'noopener noreferrer')
     expect(screen.getByText('Example News')).toBeInTheDocument()
-    expect(screen.getAllByText('Technology')).toHaveLength(2)
+    expect(screen.getByText('Technology')).toBeInTheDocument()
     expect(screen.getByText(/4 min read/)).toBeInTheDocument()
   })
 
