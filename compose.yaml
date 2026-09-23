@@ -1,0 +1,10 @@
+services:
+  presshub:
+    build:
+      context: .
+      args:
+        VITE_GUARDIAN_API_KEY: ${VITE_GUARDIAN_API_KEY:-}
+        VITE_NEWSAPI_AI_API_KEY: ${VITE_NEWSAPI_AI_API_KEY:-}
+        VITE_NYT_API_KEY: ${VITE_NYT_API_KEY:-}
+    ports:
+      - "8080:80"
