@@ -76,6 +76,9 @@ export function createNewsApiProvider(apiKey?: string): NewsProvider {
     capabilities: { keyword: true, date: true, category: true, source: true, author: true, pagination: true },
     async search(query: ArticleQuery, cursor, signal) {
       if (!apiKey) throw new ProviderRequestError('missing-key', 'Add VITE_NEWSAPI_AI_API_KEY to enable NewsAPI.ai.')
+      if (query.authors.length && !query.authors.some((author) => author.provider === 'newsapi-ai' && author.id)) {
+        return { articles: [], nextCursor: null, warnings: ['NewsAPI.ai does not match the selected author.'] }
+      }
       const filters: Record<string, unknown>[] = []
       if (query.keyword) filters.push({ keyword: query.keyword })
       const bounds = dateBounds(query)

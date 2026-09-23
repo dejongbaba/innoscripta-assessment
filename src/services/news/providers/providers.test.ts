@@ -1,8 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { mapGuardianResult } from '@/services/news/providers/guardian'
-import { mapNewsApiResult } from '@/services/news/providers/newsapi-ai'
-import { mapNytResult } from '@/services/news/providers/nyt'
+import { createGuardianProvider, mapGuardianResult } from '@/services/news/providers/guardian'
+import { createNewsApiProvider, mapNewsApiResult } from '@/services/news/providers/newsapi-ai'
+import { createNytProvider, mapNytResult } from '@/services/news/providers/nyt'
+import { EMPTY_ARTICLE_QUERY } from '@/services/news/types'
+
+afterEach(() => vi.unstubAllGlobals())
 
 describe('provider normalization', () => {
   it('normalizes Guardian fields and stable contributor identities', () => {
@@ -67,5 +70,82 @@ describe('provider normalization', () => {
       authors: [{ id: null, name: 'Ada Example', provider: 'nyt' }],
       categories: ['science'],
     })
+  })
+})
+
+describe('provider request translation', () => {
+  it('translates Guardian keyword, date, category, contributor and page filters', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      response: { status: 'ok', total: 0, currentPage: 3, pages: 3, results: [] },
+    }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await createGuardianProvider('key').search({
+      ...EMPTY_ARTICLE_QUERY,
+      keyword: 'clean energy', datePreset: 'custom', from: '2026-09-01', to: '2026-09-23',
+      categories: ['science'], authors: [{ id: 'profile/ada', name: 'Ada', provider: 'guardian' }],
+    }, '3')
+
+    const url = new URL(fetchMock.mock.calls[0][0])
+    expect(url.searchParams.get('q')).toBe('clean energy')
+    expect(url.searchParams.get('from-date')).toBe('2026-09-01')
+    expect(url.searchParams.get('section')).toBe('science')
+    expect(url.searchParams.get('tag')).toBe('profile/ada')
+    expect(url.searchParams.get('page')).toBe('3')
+  })
+
+  it('builds NewsAPI.ai AND groups with OR values inside preference groups', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      articles: { page: 2, pages: 2, totalResults: 0, results: [] },
+    }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await createNewsApiProvider('key').search({
+      ...EMPTY_ARTICLE_QUERY,
+      keyword: 'markets', categories: ['business', 'technology'],
+      sources: ['newsapi-ai:reuters.com', 'newsapi-ai:apnews.com'],
+    }, '2')
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit
+    const body = JSON.parse(String(init.body))
+    expect(body.articlesPage).toBe(2)
+    expect(body.query.$query.$and).toEqual(expect.arrayContaining([
+      { keyword: 'markets' },
+      { categoryUri: { $or: ['dmoz/Business', 'dmoz/Computers'] } },
+      { sourceUri: { $or: ['reuters.com', 'apnews.com'] } },
+    ]))
+  })
+
+  it('translates NYT filters and keeps its zero-based page cursor', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      response: { docs: [], meta: { hits: 0, offset: 20 } },
+    }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await createNytProvider('key').search({
+      ...EMPTY_ARTICLE_QUERY,
+      keyword: 'space', datePreset: 'custom', from: '2026-09-01', to: '2026-09-23',
+      categories: ['science'], sources: ['nyt:The New York Times'],
+    }, '2')
+
+    const url = new URL(fetchMock.mock.calls[0][0])
+    expect(url.searchParams.get('page')).toBe('2')
+    expect(url.searchParams.get('begin_date')).toBe('20260901')
+    expect(url.searchParams.get('end_date')).toBe('20260923')
+    expect(url.searchParams.get('fq')).toContain('section_name:("science")')
+    expect(url.searchParams.get('fq')).toContain('source:("The New York Times")')
+  })
+
+  it('excludes providers that cannot satisfy a selected provider-qualified author', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    const page = await createGuardianProvider('key').search({
+      ...EMPTY_ARTICLE_QUERY,
+      authors: [{ id: 'author:42', name: 'Reporter', provider: 'newsapi-ai' }],
+    }, null)
+
+    expect(page.articles).toEqual([])
+    expect(page.warnings[0]).toMatch(/selected author/i)
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 })

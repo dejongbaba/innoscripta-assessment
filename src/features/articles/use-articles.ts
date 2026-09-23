@@ -62,16 +62,10 @@ export function useArticles(query: ArticleQuery): NewsFeedResult {
   const guardian = useProviderFeed(newsProviders[0], query)
   const newsApi = useProviderFeed(newsProviders[1], query)
   const nyt = useProviderFeed(newsProviders[2], query)
-  const results = [guardian, newsApi, nyt]
-
-  const articles = useMemo(
-    () =>
-      deduplicateAndSortArticles(
-        results.flatMap((result) =>
-          result.data?.pages.flatMap((page) => page.articles) ?? [],
-        ),
-      ),
-    [guardian.data, newsApi.data, nyt.data],
+  const articles = deduplicateAndSortArticles(
+    [guardian, newsApi, nyt].flatMap((result) =>
+      result.data?.pages.flatMap((page) => page.articles) ?? [],
+    ),
   )
 
   const sources = useMemo(() => {
@@ -90,6 +84,7 @@ export function useArticles(query: ArticleQuery): NewsFeedResult {
     return [...values.values()].sort((a, b) => a.name.localeCompare(b.name))
   }, [articles])
 
+  const results = [guardian, newsApi, nyt]
   const warnings = results.flatMap((result) => result.data?.pages.flatMap((page) => page.warnings) ?? [])
   const hasNextPage = results.some((result) => result.hasNextPage)
 

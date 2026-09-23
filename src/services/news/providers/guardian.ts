@@ -85,6 +85,9 @@ export function createGuardianProvider(apiKey?: string): NewsProvider {
       if (query.sources.length && !query.sources.includes('guardian:theguardian.com')) {
         return { articles: [], nextCursor: null, warnings: ['The Guardian does not match the selected publisher.'] }
       }
+      if (query.authors.length && !query.authors.some((author) => author.provider === 'guardian' && author.id)) {
+        return { articles: [], nextCursor: null, warnings: ['The Guardian does not match the selected author.'] }
+      }
       const url = new URL('https://content.guardianapis.com/search')
       url.searchParams.set('api-key', apiKey)
       url.searchParams.set('page-size', '12')
