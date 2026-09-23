@@ -60,8 +60,8 @@ export function ArticleCard({ article, featured = false }: { article: Article; f
             {article.title}
           </h3>
           {article.description ? <p className="line-clamp-2 min-h-[3rem] text-sm leading-6 text-muted-foreground">{article.description}</p> : <span className="min-h-[3rem]" aria-hidden="true" />}
-          <span className="inline-flex h-9 w-[106px] shrink-0 items-center justify-center gap-1.5 rounded-[9px] border border-border bg-white px-2 text-[13px] font-medium text-foreground transition-colors duration-250 group-hover/card-module:border-[#0c0407] group-hover/card-module:bg-[#0c0407] group-hover/card-module:text-white group-focus-visible/card-module:border-[#0c0407] group-focus-visible/card-module:bg-[#0c0407] group-focus-visible/card-module:text-white">
-            <span>Read more</span>
+          <span className="inline-flex h-9 w-[106px] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[9px] border border-border bg-white px-2 text-[13px] font-medium text-foreground transition-colors duration-250 group-hover/card-module:border-[#0c0407] group-hover/card-module:bg-[#0c0407] group-hover/card-module:text-white group-focus-visible/card-module:border-[#0c0407] group-focus-visible/card-module:bg-[#0c0407] group-focus-visible/card-module:text-white">
+            <span className="shrink-0 whitespace-nowrap">Read more</span>
             <span className="relative size-4 overflow-hidden" aria-hidden="true">
               <ArrowRightIcon className="absolute inset-0 size-4 transition-transform duration-250 ease-out group-hover/card-module:-translate-x-5 group-focus-visible/card-module:-translate-x-5" />
               <ArrowRightIcon className="absolute inset-0 size-4 translate-x-5 text-white transition-transform duration-250 ease-out group-hover/card-module:translate-x-0 group-focus-visible/card-module:translate-x-0" />
