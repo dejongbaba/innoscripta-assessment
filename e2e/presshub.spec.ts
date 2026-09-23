@@ -38,6 +38,12 @@ test('category preferences persist after refresh', async ({ page, isMobile }) =>
 })
 
 test('all primary routes render without a router error', async ({ page }) => {
+  const runtimeErrors: string[] = []
+  page.on('pageerror', (error) => runtimeErrors.push(error.message))
+  page.on('console', (message) => {
+    if (message.type() === 'error') runtimeErrors.push(message.text())
+  })
+
   const routes = [
     { path: '/', heading: /explore the world/i },
     { path: '/articles', heading: /all articles/i },
@@ -51,4 +57,6 @@ test('all primary routes render without a router error', async ({ page }) => {
     await expect(page.getByRole('heading', { name: route.heading })).toBeVisible()
     await expect(page.locator('text=Unexpected Application Error')).toHaveCount(0)
   }
+
+  expect(runtimeErrors).toEqual([])
 })
