@@ -136,6 +136,23 @@ describe('provider request translation', () => {
     expect(url.searchParams.get('fq')).toContain('source:("The New York Times")')
   })
 
+  it('accepts the current NYT metadata response key and requests a valid NewsAPI.ai home query', async () => {
+    const nytFetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      response: { docs: [], metadata: { hits: 0, offset: 0 } },
+    }), { status: 200 }))
+    vi.stubGlobal('fetch', nytFetch)
+    const nytPage = await createNytProvider('key').search(EMPTY_ARTICLE_QUERY, null)
+    expect(nytPage.articles).toEqual([])
+
+    const newsFetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      articles: { page: 1, pages: 1, totalResults: 0, results: [] },
+    }), { status: 200 }))
+    vi.stubGlobal('fetch', newsFetch)
+    await createNewsApiProvider('key').search(EMPTY_ARTICLE_QUERY, null)
+    const body = JSON.parse(String((newsFetch.mock.calls[0][1] as RequestInit).body))
+    expect(body.query.$query.dateStart).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+
   it('excludes providers that cannot satisfy a selected provider-qualified author', async () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)

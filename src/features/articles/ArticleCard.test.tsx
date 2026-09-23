@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 import { ArticleCard } from '@/features/articles/ArticleCard'
@@ -30,5 +30,11 @@ describe('ArticleCard', () => {
     expect(screen.getByText('Example News')).toBeInTheDocument()
     expect(screen.getAllByText('Technology')).toHaveLength(2)
     expect(screen.getByText(/4 min read/)).toBeInTheDocument()
+  })
+
+  it('falls back to the editorial placeholder when a remote image fails', () => {
+    const { container } = render(<ArticleCard article={{ ...article, imageUrl: 'https://invalid.example/image.jpg' }} />)
+    fireEvent.error(container.querySelector('img') as HTMLImageElement)
+    expect(container.querySelector('img')).not.toBeInTheDocument()
   })
 })

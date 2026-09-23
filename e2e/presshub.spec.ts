@@ -36,3 +36,19 @@ test('category preferences persist after refresh', async ({ page, isMobile }) =>
     await expect(page.getByRole('navigation', { name: /mobile navigation/i })).toBeVisible()
   }
 })
+
+test('all primary routes render without a router error', async ({ page }) => {
+  const routes = [
+    { path: '/', heading: /explore the world/i },
+    { path: '/articles', heading: /all articles/i },
+    { path: '/categories', heading: /all categories/i },
+    { path: '/preferences', heading: /your news mix/i },
+    { path: '/about', heading: /three newsrooms/i },
+  ]
+
+  for (const route of routes) {
+    await page.goto(route.path, { waitUntil: 'domcontentloaded' })
+    await expect(page.getByRole('heading', { name: route.heading })).toBeVisible()
+    await expect(page.locator('text=Unexpected Application Error')).toHaveCount(0)
+  }
+})

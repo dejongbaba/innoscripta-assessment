@@ -1,5 +1,6 @@
 import { format } from 'date-fns'
 import { ArrowRightIcon, ImageIcon } from 'lucide-react'
+import { useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,6 +12,7 @@ function titleCase(value: string) {
 }
 
 export function ArticleCard({ article, featured = false }: { article: Article; featured?: boolean }) {
+  const [imageFailed, setImageFailed] = useState(false)
   return (
     <a
       href={article.url}
@@ -19,10 +21,10 @@ export function ArticleCard({ article, featured = false }: { article: Article; f
       aria-label={`Open ${article.title} on ${article.publisher.name} in a new tab`}
       className="group/card block rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4"
     >
-      <Card className="overflow-hidden border-0 py-0 shadow-none">
-        <div className={cn('relative overflow-hidden rounded-2xl bg-muted', featured ? 'aspect-[16/9]' : 'aspect-[4/3]')}>
-          {article.imageUrl ? (
-            <img src={article.imageUrl} alt="" loading="lazy" className="size-full object-cover transition duration-500 ease-out group-hover/card:scale-[1.02] group-focus-visible/card:scale-[1.02]" />
+      <Card className="overflow-hidden rounded-2xl border border-border/70 py-0 shadow-none">
+        <div className={cn('relative overflow-hidden rounded-none bg-muted', featured ? 'aspect-[16/9]' : 'aspect-[4/3]')}>
+          {article.imageUrl && !imageFailed ? (
+            <img src={article.imageUrl} alt="" loading="lazy" onError={() => setImageFailed(true)} className="size-full object-cover transition duration-500 ease-out group-hover/card:scale-[1.02] group-focus-visible/card:scale-[1.02]" />
           ) : (
             <div className="flex size-full items-center justify-center bg-[radial-gradient(circle_at_30%_20%,var(--color-chart-1),transparent_45%),linear-gradient(135deg,var(--color-muted),var(--color-chart-3))] text-primary-foreground"><ImageIcon aria-hidden="true" className="size-8 opacity-80" /></div>
           )}

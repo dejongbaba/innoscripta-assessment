@@ -1,3 +1,4 @@
+import { format, subDays } from 'date-fns'
 import { z } from 'zod'
 
 import { normalizeCategories } from '@/services/news/categories'
@@ -90,6 +91,12 @@ export function createNewsApiProvider(apiKey?: string): NewsProvider {
       if (sources.length) filters.push({ sourceUri: { $or: sources } })
       const authors = query.authors.filter((author) => author.provider === 'newsapi-ai' && author.id).map((author) => author.id)
       if (authors.length) filters.push({ authorUri: { $or: authors } })
+      // Event Registry requires at least one query condition. For the
+      // unfiltered home feed, use a rolling 30-day date window to request
+      // current stories instead of sending an invalid empty query object.
+      const queryValue = filters.length
+        ? filters.length === 1 ? filters[0] : { $and: filters }
+        : { dateStart: format(subDays(new Date(), 30), 'yyyy-MM-dd') }
       const body = {
         action: 'getArticles', resultType: 'articles', apiKey,
         articlesPage: Number(cursor ?? '1'), articlesCount: 12,
@@ -97,14 +104,20 @@ export function createNewsApiProvider(apiKey?: string): NewsProvider {
         includeArticleImage: true, includeArticleCategories: true,
         includeArticleAuthors: true, articlesArticleBodyLen: 320,
         dataType: ['news'],
-        ...(filters.length ? { query: { $query: filters.length === 1 ? filters[0] : { $and: filters } } } : {}),
+        query: { $query: queryValue },
       }
       try {
         const response = await fetch('https://eventregistry.org/api/v1/article/getArticles', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal,
         })
         assertResponse(response, 'NewsAPI.ai')
-        const parsed = newsApiResponseSchema.safeParse(await response.json())
+        const payload: unknown = await response.json()
+        if (typeof payload === 'object' && payload !== null && 'error' in payload && typeof payload.error === 'string') {
+          const message = payload.error
+          const code: 'unauthorized' | 'malformed-response' = /api.?key|auth|token|permission/i.test(message) ? 'unauthorized' : 'malformed-response'
+          throw new ProviderRequestError(code, `NewsAPI.ai: ${message}`)
+        }
+        const parsed = newsApiResponseSchema.safeParse(payload)
         if (!parsed.success) throw new ProviderRequestError('malformed-response', 'NewsAPI.ai returned an unexpected response.')
         const page = parsed.data.articles
         const current = page.page ?? Number(cursor ?? '1')

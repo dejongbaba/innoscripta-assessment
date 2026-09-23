@@ -43,8 +43,16 @@ const nytResultSchema = z.object({
 const nytResponseSchema = z.object({
   response: z.object({
     docs: z.array(nytResultSchema),
-    meta: z.object({ hits: z.number(), offset: z.number() }),
+    // The API has returned both `meta` (older Article Search responses) and
+    // `metadata` (the current response shape). Accept both during the
+    // transition so a valid response is never reported as malformed.
+    meta: z.object({ hits: z.number(), offset: z.number() }).optional(),
+    metadata: z.object({ hits: z.number(), offset: z.number() }).optional(),
   }),
+}).superRefine((value, context) => {
+  if (!value.response.meta && !value.response.metadata) {
+    context.addIssue({ code: 'custom', message: 'NYT response is missing pagination metadata.' })
+  }
 })
 
 export type NytResult = z.input<typeof nytResultSchema>
@@ -117,11 +125,13 @@ export function createNytProvider(apiKey?: string): NewsProvider {
         const parsed = nytResponseSchema.safeParse(await response.json())
         if (!parsed.success) throw new ProviderRequestError('malformed-response', 'The New York Times returned an unexpected response.')
         const data = parsed.data.response
+        const meta = data.meta ?? data.metadata
+        if (!meta) throw new ProviderRequestError('malformed-response', 'The New York Times response is missing pagination metadata.')
         const current = Number(cursor ?? '0')
         return {
           articles: data.docs.map(mapNytResult),
-          nextCursor: data.meta.offset + data.docs.length < Math.min(data.meta.hits, 1000) ? String(current + 1) : null,
-          total: data.meta.hits,
+          nextCursor: meta.offset + data.docs.length < Math.min(meta.hits, 1000) ? String(current + 1) : null,
+          total: meta.hits,
           warnings: [],
         }
       } catch (error) {
