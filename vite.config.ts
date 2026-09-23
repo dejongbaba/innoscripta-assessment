@@ -15,6 +15,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     css: true,
+    pool: 'threads',
+    maxWorkers: 2,
     exclude: ['e2e/**', 'node_modules/**'],
   },
 })
