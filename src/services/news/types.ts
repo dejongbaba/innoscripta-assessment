@@ -87,6 +87,20 @@ export interface ProviderPage {
   warnings: string[]
 }
 
+export interface NewsPreferencesV1 {
+  version: 1
+  sources: PublisherRef[]
+  categories: CategorySlug[]
+  authors: AuthorRef[]
+}
+
+export const EMPTY_PREFERENCES: NewsPreferencesV1 = {
+  version: 1,
+  sources: [],
+  categories: [],
+  authors: [],
+}
+
 export interface NewsProvider {
   id: NewsProviderId
   name: string
