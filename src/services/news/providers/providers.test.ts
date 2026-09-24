@@ -80,6 +80,20 @@ describe('provider normalization', () => {
       categories: ['science'],
     })
   })
+
+  it('accepts NYT articles whose multimedia default URL is empty', () => {
+    const article = mapNytResult({
+      _id: 'nyt://article/no-image',
+      web_url: 'https://www.nytimes.com/2026/09/24/no-image.html',
+      abstract: 'An article without an image.',
+      pub_date: '2026-09-24T12:00:00Z',
+      source: 'The New York Times',
+      headline: { main: 'No image article' },
+      multimedia: { default: { url: '' } },
+    })
+
+    expect(article.imageUrl).toBeNull()
+  })
 })
 
 describe('provider request translation', () => {
@@ -160,6 +174,22 @@ describe('provider request translation', () => {
     await createNewsApiProvider('key').search(EMPTY_ARTICLE_QUERY, null)
     const body = JSON.parse(String((newsFetch.mock.calls[0][1] as RequestInit).body))
     expect(body.query.$query.dateStart).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+
+  it('treats NYT null docs as an empty page for a zero-hit category filter', async () => {
+    const nytFetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      response: { docs: null, metadata: { hits: 0, offset: 0 } },
+    }), { status: 200 }))
+    vi.stubGlobal('fetch', nytFetch)
+
+    const page = await createNytProvider('key').search({
+      ...EMPTY_ARTICLE_QUERY,
+      categories: ['technology'],
+    }, null)
+
+    expect(page).toMatchObject({ articles: [], nextCursor: null, total: 0 })
+    const url = new URL(nytFetch.mock.calls[0][0])
+    expect(url.searchParams.get('fq')).toBe('section_name:("technology")')
   })
 
   it('excludes providers that cannot satisfy a selected provider-qualified author', async () => {

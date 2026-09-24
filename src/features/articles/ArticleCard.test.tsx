@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 import { ArticleCard } from '@/features/articles/ArticleCard'
+import { ArticleSkeletons } from '@/features/articles/ArticleSkeleton'
 import type { Article } from '@/services/news/types'
 
 const article: Article = {
@@ -36,5 +37,17 @@ describe('ArticleCard', () => {
     const { container } = render(<ArticleCard article={{ ...article, imageUrl: 'https://invalid.example/image.jpg' }} />)
     fireEvent.error(container.querySelector('img') as HTMLImageElement)
     expect(container.querySelector('img')).not.toBeInTheDocument()
+  })
+
+  it('keeps the read-more control sized to its content', () => {
+    render(<ArticleCard article={article} />)
+
+    expect(screen.getByText('Read more').parentElement).toHaveClass('self-start', 'w-fit')
+  })
+
+  it('removes the card ring from loading skeletons', () => {
+    const { container } = render(<ArticleSkeletons count={1} />)
+
+    expect(container.querySelector('[data-slot="card"]')).toHaveClass('border-0', 'ring-0')
   })
 })

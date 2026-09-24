@@ -32,7 +32,7 @@ const nytResultSchema = z.object({
     .optional(),
   multimedia: z
     .union([
-      z.object({ default: z.object({ url: z.url() }).optional() }),
+      z.object({ default: z.object({ url: z.union([z.url(), z.literal('')]).optional() }).optional() }),
       z.array(z.object({ url: z.string() })),
     ])
     .nullable()
@@ -42,7 +42,11 @@ const nytResultSchema = z.object({
 
 const nytResponseSchema = z.object({
   response: z.object({
-    docs: z.array(nytResultSchema),
+    // Article Search returns `null` instead of `[]` for some zero-hit
+    // filtered queries. Normalize that documented-in-practice empty shape at
+    // the provider boundary so the UI can report an empty result, not a
+    // malformed provider response.
+    docs: z.preprocess((value) => value === null ? [] : value, z.array(nytResultSchema)),
     // The API has returned both `meta` (older Article Search responses) and
     // `metadata` (the current response shape). Accept both during the
     // transition so a valid response is never reported as malformed.
@@ -64,7 +68,7 @@ function nytImage(multimedia: z.output<typeof nytResultSchema>['multimedia']): s
     if (!value) return null
     return value.startsWith('http') ? value : `https://www.nytimes.com/${value.replace(/^\//, '')}`
   }
-  return multimedia.default?.url ?? null
+  return multimedia.default?.url || null
 }
 
 export function mapNytResult(input: NytResult): Article {
