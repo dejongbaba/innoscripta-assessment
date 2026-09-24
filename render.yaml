@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: presshub
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: VITE_GUARDIAN_API_KEY
+        sync: false
+      - key: VITE_NEWSAPI_AI_API_KEY
+        sync: false
+      - key: VITE_NYT_API_KEY
+        sync: false

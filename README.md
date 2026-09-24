@@ -54,6 +54,20 @@ docker compose up --build
 
 Open `http://localhost:8080`. Compose forwards `.env` values as build arguments. Nginx serves immutable generated assets and falls back to `index.html` for deep React Router URLs such as `/articles?category=science`.
 
+## Deploy to Render
+
+This repository includes `render.yaml` for a Docker web service. In Render, create a new Blueprint and select the repository; Render will use the existing `Dockerfile`, build the Vite bundle, and serve it through Nginx on the Render `PORT`.
+
+Add these environment variables in the Render dashboard before deploying:
+
+```dotenv
+VITE_GUARDIAN_API_KEY=
+VITE_NEWSAPI_AI_API_KEY=
+VITE_NYT_API_KEY=
+```
+
+The `VITE_` values are embedded in the browser bundle by design, so treat them as public client-side credentials and apply the providers' usage restrictions where available.
+
 ## Architecture
 
 - `src/services/news/providers`: isolated provider adapters, validation, normalization, error mapping, and cursors
